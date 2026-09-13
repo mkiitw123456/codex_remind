@@ -26,7 +26,7 @@ npm run dev
 
 1. 在 Vercel 匯入 `mkiitw123456/codex_remind`，選擇 `main`。
 2. Framework Preset 選 Other。儲存庫的 `vercel.json` 已設定 `npm run build` 及 `dist` 輸出目錄；根目錄的 `api/events.js` 是 Vercel Function。
-3. 建立 Upstash Redis 資料庫，取得 REST URL 和 REST Token。
+3. 可在 Vercel Storage 連接 Upstash Redis 免費資料庫；整合會自動提供 `KV_REST_API_URL` 和 `KV_REST_API_TOKEN`，程式已支援。也可自行建立 Upstash Redis，改用下表的 REST URL 和 REST Token。
 4. 在 Vercel Project → Settings → Environment Variables 設定以下四個值。不要加任何公開前端前綴。
 
 | 變數 | 用途 |
@@ -72,6 +72,7 @@ Stop 表示本次回覆結束，不代表所有需求都已成功。因此 Hook 
 - YouTube 可能拒絕嵌入、要求登入或阻止自動播放；畫面會提示。無法繞過影片擁有者或 YouTube 的限制。
 - 不是同步聽歌房；通知共用，影片及播放進度各自獨立。
 - 5 秒輪詢每台持續開啟的裝置約每分鐘 12 次請求，實際費用／額度依 Vercel 與 Upstash 帳戶方案。
+- 此專案設定使用 Upstash Free（建立時每月 500,000 次指令）。不自動升級付費；接近額度時可關閉不用的網頁或調長輪詢間隔。
 - 目前為單一共用頻道。持有觀看密鑰的人可看通知名稱，發送密鑰可發通知。對外大型服務應增加帳號／房間隔離與流量限制。
 
 ## 驗證
