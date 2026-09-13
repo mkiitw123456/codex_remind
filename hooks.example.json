@@ -1,0 +1,1 @@
+{"description":"Codex Radio：每次回覆結束後送出通知","hooks":{"Stop":[{"hooks":[{"type":"command","command":"node D:/codex_remind/scripts/notify.mjs","timeout":30,"async":true}]}]}}
