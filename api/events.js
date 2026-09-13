@@ -2,7 +2,7 @@ import {authorized,makeEvent,redis} from '../lib/events.js';
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({error:'Method not allowed'});}
-  if(!process.env.UPSTASH_REDIS_REST_URL||!process.env.UPSTASH_REDIS_REST_TOKEN||!(process.env.NOTIFY_TOKEN?.length>=24)||!(process.env.VIEW_TOKEN?.length>=24)) return res.status(503).json({error:'尚未設定通知服務，請完成 Vercel 環境變數設定'});
+  if(!(process.env.KV_REST_API_URL||process.env.UPSTASH_REDIS_REST_URL)||!(process.env.KV_REST_API_TOKEN||process.env.UPSTASH_REDIS_REST_TOKEN)||!(process.env.NOTIFY_TOKEN?.length>=24)||!(process.env.VIEW_TOKEN?.length>=24)) return res.status(503).json({error:'尚未設定通知服務，請完成 Vercel 環境變數設定'});
   if(!authorized(req.headers.authorization,process.env[req.method==='GET'?'VIEW_TOKEN':'NOTIFY_TOKEN'])) return res.status(401).json({error:'連線密鑰不正確'});
   try{
     if(req.method==='GET') return res.status(200).json({events:(await redis(['LRANGE','codex-radio:events',0,99])||[]).map(x=>JSON.parse(x))});
