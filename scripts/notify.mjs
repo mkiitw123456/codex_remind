@@ -4,7 +4,7 @@ let hook=false;
 try{
   const config=JSON.parse(await readFile(new URL('./notify.local.json',import.meta.url),'utf8'));
   let event;
-  if(process.argv[2]==='--complete')event={kind:'completed',title:process.argv[3],id:randomUUID()};
+  if(['--complete','--attention'].includes(process.argv[2]))event={kind:process.argv[2]==='--complete'?'completed':'attention',title:process.argv[3],id:randomUUID()};
   else{
     hook=true;let raw='';for await(const part of process.stdin){raw+=part;if(raw.length>1000000)throw new Error('Hook input too large');}
     const payload=JSON.parse(raw);if(payload.hook_event_name!=='Stop')process.exit(0);

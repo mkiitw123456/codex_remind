@@ -43,12 +43,18 @@ npm run dev
 
 ## Codex 電腦版串接
 
+日常使用：在網站按「複製通知指令」，貼到新的 Codex 任務即可。它會要求 Codex 在項目完成時發出完成通知，需要你確認／補資料／登入時發出待確認通知。這是透過任務指令呼叫本機程式，需要下列一次性連線設定；不需要安裝 Hook。換到另一台電腦時，需先配置該台的程式路徑與連線設定。
+
 1. 複製 `scripts/notify.example.json` 為 `scripts/notify.local.json`（Git 已忽略）。填入正式 `siteUrl`、NOTIFY_TOKEN 及想顯示的 `projectName`。
 2. 先測試明確的完成通知：
 
 ```powershell
 node D:/codex_remind/scripts/notify.mjs --complete "首頁製作"
 ```
+
+也可測試待確認通知：`node D:/codex_remind/scripts/notify.mjs --attention "首頁：請確認配色"`。
+
+以下為選用功能，日常複製指令流程不需要：
 
 3. 自動回合通知：將 `hooks.example.json` 的 Stop handler 合併到使用者的 `~/.codex/hooks.json`；若只想套用單一專案則合併到該專案 `.codex/hooks.json`。不要覆蓋既有 hooks。範例使用此電腦的 D 槽絕對路徑；搬動專案後須同步修改。
 4. 依 Codex 提示審閱並信任這個 Hook。官方文件說明非受管 Hook 必須先經信任；CLI 可用 `/hooks` 審閱。若目前電腦版沒有審閱介面，需透過相同設定目錄的 CLI 審閱，或先使用完成指令。重新開啟工作階段並做一次實際回合驗證。
