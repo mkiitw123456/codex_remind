@@ -41,29 +41,41 @@ npm run dev
 5. Deploy；後續 push 到 main 自動部署。修改環境變數後重新部署。
 6. 打開正式網址 → 連線設定 → 填入 VIEW_TOKEN → 點啟用聲音。
 
-## Codex 電腦版串接
+## 跨電腦通知（建議流程）
 
-日常使用：在網站按「複製通知指令」，貼到新的 Codex 任務即可。它會要求 Codex 在項目完成時發出完成通知，需要你確認／補資料／登入時發出待確認通知。這是透過任務指令呼叫本機程式，需要下列一次性連線設定；不需要安裝 Hook。換到另一台電腦時，需先配置該台的程式路徑與連線設定。
+網站按「複製通知指令」，貼到 Codex 任務。Windows、macOS、Linux 都用相同文字；Codex 使用所在電腦的 PowerShell、Python 3 或 Node 直接呼叫網站 API，不依賴儲存庫、固定磁碟或本機發送程式。
 
-1. 複製 `scripts/notify.example.json` 為 `scripts/notify.local.json`（Git 已忽略）。填入正式 `siteUrl`、NOTIFY_TOKEN 及想顯示的 `projectName`。
-2. 先測試明確的完成通知：
+### 每台新電腦設定一次
 
-```powershell
-node D:/codex_remind/scripts/notify.mjs --complete "首頁製作"
-```
+1. 取得管理者提供的私人連線檔「通知連線設定.private.json」，提供給新電腦上的 Codex。不要把密鑰貼到公開對話或提交 Git。
+2. 貼上網站的通知指令。Codex 依指令驗證檔案後，存入以下使用者設定目錄。
+3. 之後每個任務只需貼相同指令。你現在這台電腦已完成遷移。
 
-也可測試待確認通知：`node D:/codex_remind/scripts/notify.mjs --attention "首頁：請確認配色"`。
+| 系統 | 私人設定位置 |
+| --- | --- |
+| Windows | APPDATA/CodexRadio/connection.json（APPDATA 是環境變數，通常位於使用者的 AppData/Roaming） |
+| macOS | ~/Library/Application Support/CodexRadio/connection.json |
+| Linux | XDG_CONFIG_HOME/codex-radio/connection.json；未設定絕對路徑時使用 ~/.config/codex-radio/connection.json |
 
-以下為選用功能，日常複製指令流程不需要：
+私人 JSON 只有 siteUrl 與 notifyToken。siteUrl 必須為 https://codex-remind.vercel.app；notifyToken 是網站 NOTIFY_TOKEN，至少 24 字元且無換行。網站提供的 connection.example.json 只是空白範本，不含任何密鑰。觀看密鑰不能代替發送密鑰。檔案遺失時須重新取得；瀏覽器不會回傳發送密鑰。
 
-3. 自動回合通知：將 `hooks.example.json` 的 Stop handler 合併到使用者的 `~/.codex/hooks.json`；若只想套用單一專案則合併到該專案 `.codex/hooks.json`。不要覆蓋既有 hooks。範例使用此電腦的 D 槽絕對路徑；搬動專案後須同步修改。
-4. 依 Codex 提示審閱並信任這個 Hook。官方文件說明非受管 Hook 必須先經信任；CLI 可用 `/hooks` 審閱。若目前電腦版沒有審閱介面，需透過相同設定目錄的 CLI 審閱，或先使用完成指令。重新開啟工作階段並做一次實際回合驗證。
+私人連線檔目前使用同一個發送密鑰，只交給你信任的電腦；若外洩需在 Vercel 更新 NOTIFY_TOKEN 並重新部署，再更新所有發送電腦的私人設定。這一版沒有個別裝置的撤銷功能。
 
-Stop 表示本次回覆結束，不代表所有需求都已成功。因此 Hook 自動顯示「本次回覆完成」；`--complete` 才顯示「項目已完成」。你可以在工作專案的 AGENTS.md 加入這段，讓 Codex 完成並驗證工作後主動呼叫：
+### 通知規則與 API
 
-> 完成使用者要求且驗證通過後，執行 `node D:/codex_remind/scripts/notify.mjs --complete "簡短項目名稱"`。等待澄清、遇到阻礙或工作未完成時不要發送完成通知。發送失敗時如實說明。
+- 項目確實完成、驗證通過：completed。
+- 需要你確認、補資料、選方案或手動操作：attention。
+- Codex 必須先在對話說明問題，通知不構成你的授權；同一等待事項不重複通知。
+- POST https://codex-remind.vercel.app/api/events；Authorization 使用 Bearer 加本機讀取的 notifyToken；Content-Type 為 application/json。
+- UTF-8 JSON 的 id 是新 UUID，kind 為上述類型，title 是 1–120 字。重試保持相同 UUID。
+- 拒絕重新導向。每次逾時 10 秒；只針對暫時性錯誤最多重試 3 次，401/403 不重試。HTTP 2xx 且 JSON ok=true 才算收件成功。
+- 通知指令是給可操作本機檔案／網路的 Codex 使用；純聊天或隔離雲端環境必須另外配置該執行環境的檔案與權限，不能宣稱自動取得你電腦的設定。
 
-兩者可擇一；同時使用會有一則完成通知及一則回合通知。自動 Hook 不上傳對話或程式碼，只傳設定的專案名稱、事件類型、雜湊識別碼；不讀取 transcript。失敗最多重試三次，重試使用相同 ID，持續失敗會顯示警告，不冒充已送達。
+### 舊腳本與 Hook 相容
+
+既有 scripts/notify.mjs 仍可用，優先讀取新的使用者設定，不存在時才讀 scripts/notify.local.json。它是選用工具；新的跨電腦指令不需要它。
+
+hooks.example.json 仍為選用的回合結束提醒，不會自動安裝。Stop 僅表示回覆結束，不等同項目成功。日常使用複製指令即可，不需要 Hook。
 
 ## 行為與限制
 

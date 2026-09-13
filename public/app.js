@@ -19,3 +19,5 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){clearTime
 
 $('copy-prompt').onclick=async()=>{try{await navigator.clipboard.writeText(notificationPrompt);$('copy-status').textContent='已複製，貼到 Codex 任務即可。';}catch{$('prompt-text').value=notificationPrompt;$('prompt-dialog').showModal();$('prompt-text').select();}};
 $('close-prompt').onclick=()=>$('prompt-dialog').close();
+
+$('view-prompt').onclick=()=>{$('prompt-text').value=notificationPrompt;$('prompt-dialog').showModal();};
